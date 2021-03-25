@@ -1,38 +1,37 @@
 import pygame
 import random
 import itertools
+from constants import *
 
 
 class Windows:
-    def __init__(self, width, height, background_color, caption):
-        self.width = width
-        self.height = height
-        self.background_color = background_color
-        self.caption = caption
+    def __init__(self):
+        self.width = WIDTH * GRID_SIZE
+        self.height = HEIGHT * GRID_SIZE
+        self.grid_size = GRID_SIZE
+        self.background_color = BACKGROUND_COLOR
+        self.caption = CAPTION
 
-        self.window = pygame.display.set_mode((width, height))
-        self.window.fill(background_color)
-        pygame.display.set_caption(caption)
+        self.window = pygame.display.set_mode((self.width, self.height))
+        self.window.fill(self.background_color)
+        pygame.display.set_caption(self.caption)
 
     def update(self):
         self.window.fill(self.background_color)
 
 
 class Snake:
-    def __init__(
-        self, window, color, head_color, radius, speed, initial_position
-    ):
+    def __init__(self, window):
         self.window = window
-        self.color = color
-        self.head_color = head_color
-        self.radius = radius
-        self.speed = speed
-        self.positions = [initial_position]
-        self.directions = [None]
+        self.color = SNK_COLOR
+        self.head_color = SNK_HEAD_COLOR
+        self.size = GRID_SIZE
+        self.speed = SNK_SPEED
+        self.positions = [SNK_INIT_POS]
+        self.directions = [SNK_INIT_DIR]
         self.score = 0
-        self.hit = False
 
-        self.update_rate = int(2 * radius / speed)
+        self.update_rate = self.size // self.speed
         self.cycle_count = 0
 
         self.snake_len = 1
@@ -58,10 +57,7 @@ class Snake:
 
         # grow the snake
         if self.growth_flag:
-            if (
-                next(self.growth_cycle_handler[self.snake_len + 1])
-                == self.update_rate - 1
-            ):
+            if next(self.growth_cycle_handler[self.snake_len + 1]) == self.update_rate - 1:
                 self.positions.append(self.new_positions[self.snake_len + 1])
 
                 del self.growth_cycle_handler[self.snake_len + 1]
@@ -77,7 +73,9 @@ class Snake:
                 color = self.head_color
             else:
                 color = self.color
-            pygame.draw.circle(self.window.window, color, position, self.radius)
+            body_piece = pygame.Rect(position, (self.size, self.size))
+            pygame.draw.rect(self.window.window, color, body_piece, 0)
+            pygame.draw.rect(self.window.window, (0, 0, 0), body_piece, 1)
 
     def check_eat(self, apple):
         apl_x, apl_y = apple.center
@@ -86,10 +84,10 @@ class Snake:
 
         # yumm!
         if (
-            (head_position[0] - self.radius <= apl_x + apl_radius)
-            and (head_position[0] + self.radius >= apl_x - apl_radius)
-            and (head_position[1] - self.radius <= apl_y + apl_radius)
-            and (head_position[1] + self.radius >= apl_y - apl_radius)
+            (head_position[0] < apl_x + apl_radius)
+            and (head_position[0] + self.size > apl_x - apl_radius)
+            and (head_position[1] < apl_y + apl_radius)
+            and (head_position[1] + self.size > apl_y - apl_radius)
         ):
             self.score += 1
             print(self.score)
@@ -100,61 +98,112 @@ class Snake:
 
     def check_hit(self):
         head_position = self.positions[0]
+        hit = False
 
         # hit the border
         if (
-            (head_position[0] - self.radius <= 0)
-            or (head_position[0] + self.radius >= self.window.width)
-            or (head_position[1] - self.radius <= 0)
-            or (head_position[1] + self.radius >= self.window.height)
+            (head_position[0] < 0)
+            or (head_position[0] + self.size > self.window.width)
+            or (head_position[1] < 0)
+            or (head_position[1] + self.size > self.window.height)
         ):
-            self.hit = True
+            hit = True
 
         # hit the body
         if self.snake_len > 2:
             for position in self.positions[2:]:
                 if (
-                    (head_position[0] - self.radius < position[0] + self.radius)
-                    and (
-                        head_position[0] + self.radius
-                        > position[0] - self.radius
-                    )
-                    and (
-                        head_position[1] - self.radius
-                        < position[1] + self.radius
-                    )
-                    and (
-                        head_position[1] + self.radius
-                        > position[1] - self.radius
-                    )
+                    (head_position[0] < position[0] + self.size)
+                    and (head_position[0] + self.size > position[0])
+                    and (head_position[1] < position[1] + self.size)
+                    and (head_position[1] + self.size > position[1])
                 ):
-                    self.hit = True
+                    hit = True
+        return hit
 
     def grow(self):
-        self.growth_cycle_handler[self.snake_len + 1] = iter(
-            range(self.update_rate)
-        )
+        self.growth_cycle_handler[self.snake_len + 1] = iter(range(self.update_rate))
         self.new_positions[self.snake_len + 1] = self.positions[-1]
         self.directions.extend([None for x in range(self.update_rate)])
         self.growth_flag = True
 
 
 class Apple:
-    def __init__(self, window, color, radius):
+    def __init__(self, window):
         self.window = window
-        self.color = color
-        self.radius = radius
+        self.color = APL_COLOR
+        self.radius = APL_RADIUS
         self.center = self.recenter()
         self.recenter_count = 0
 
     def update(self, recenter):
         if recenter:
             self.center = self.recenter()
-        pygame.draw.circle(
-            self.window.window, self.color, self.center, self.radius
-        )
+        pygame.draw.circle(self.window.window, self.color, self.center, self.radius, 0)
+        pygame.draw.circle(self.window.window, (0, 0, 0), self.center, self.radius, 1)
 
     def recenter(self):
-        x = random.randint(self.radius, self.window.width - self.radius)
-        y = random.randint(self.radius, self.window.height - self.radius)
+        grid_size = self.window.grid_size
+        grid_w = self.window.width // grid_size - 1
+        grid_h = self.window.height // grid_size - 1
+        x = random.randint(0, grid_w) * grid_size + self.radius
+        y = random.randint(0, grid_h) * grid_size + self.radius
         return (x, y)
+
+
+class Game:
+    def __init__(self, window, snake, apple):
+        self.window = window
+        self.snake = snake
+        self.apple = apple
+        self.grid_cycle = itertools.cycle(range(self.window.grid_size // self.snake.speed))
+        self.running = True
+
+    def update(self, apl_recenter, snk_direction):
+        self.window.update()
+        self.apple.update(apl_recenter)
+        self.snake.update(snk_direction)
+        if self.snake.check_eat(self.apple):
+            self.apple.update(True)
+            self.apple.recenter_count = 0
+        pygame.display.flip()
+
+    def run(self):
+        running = True
+        key = None
+        snk_direction = self.snake.directions[0]
+
+        while running:
+            pygame.time.Clock().tick(FPS)
+
+            apl_recenter = False
+            self.apple.recenter_count += 1
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    key = event.key
+
+            new_direction = snk_direction
+            count_cycle = next(self.grid_cycle)
+            if count_cycle == 0:
+                if (key == pygame.K_LEFT) and not (snk_direction == SNK_DIR["RIGHT"]):
+                    new_direction = SNK_DIR["LEFT"]
+                if (key == pygame.K_RIGHT) and not (snk_direction == SNK_DIR["LEFT"]):
+                    new_direction = SNK_DIR["RIGHT"]
+                if (key == pygame.K_UP) and not (snk_direction == SNK_DIR["DOWN"]):
+                    new_direction = SNK_DIR["UP"]
+                if (key == pygame.K_DOWN) and not (snk_direction == SNK_DIR["UP"]):
+                    new_direction = SNK_DIR["DOWN"]
+            snk_direction = new_direction
+
+            if self.apple.recenter_count >= (APL_UPDATE_RATE * FPS):
+                apl_recenter = True
+                self.apple.recenter_count = 0
+
+            self.update(apl_recenter, snk_direction)
+
+            if self.snake.check_hit():
+                running = False
+                print("dead")
