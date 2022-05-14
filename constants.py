@@ -18,5 +18,5 @@ SNK_INIT_DIR = SNK_DIR["UP"]
 # apple
 APL_COLOR = (255, 50, 50)
 APL_RADIUS = GRID_SIZE / 2
-APL_UPDATE_RATE = 5  # seconds
+APL_UPDATE_RATE = 50  # seconds
 

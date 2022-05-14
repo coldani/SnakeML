@@ -1,13 +1,7 @@
 import pygame
-import itertools
-from objects import *
-from constants import *
+from objects import Game
 
 pygame.init()
-win = Windows()
 
-snake = Snake(win)
-apple = Apple(win)
-
-game = Game(win, snake, apple)
+game = Game(False)
 game.run()
