@@ -36,6 +36,7 @@ class Window:
             self)
         self.snake: Snake = Snake(self)
         self.apple: Apple = Apple(self)
+        self.text_score: TextScore = TextScore(self)
 
         self.surface.fill(self.BACKGROUND_COLOR)
         pygame.display.set_caption(CAPTION)
@@ -51,6 +52,7 @@ class Window:
         self.game_surface.update()
         self.snake.update(model.snake_positions)
         self.apple.update(model.apple_position)
+        self.text_score.update(model.score)
         pygame.display.flip()
 
     def scale_position(self, position: Position) -> Position:
@@ -192,3 +194,26 @@ class Apple:
         pygame.draw.circle(
             self.window.surface, (0, 0, 0),
             centre, self.RADIUS, 1)
+
+
+class TextScore:
+    def __init__(self, window: Window):
+        """View responsible for rendering the current score
+
+        Args:
+            window (Window): The instance of Window in which the score is
+            rendered
+        """
+        self.window: Window = window
+        self.font: pygame.font.Font = pygame.font.SysFont(None, 20)
+
+    def update(self, score: int):
+        """Renders the current score
+
+        Args:
+            score (int): Score to render
+        """
+        BLACK: Color = (0, 0, 0)
+        position: Position = (self.window.width - 80, GameSurface.GRID_SIZE)
+        font = self.font.render(f"Score: {score}", True, BLACK)
+        self.window.surface.blit(font, position)
