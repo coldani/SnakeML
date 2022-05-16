@@ -1,54 +1,39 @@
 import pygame
-from objects import *
-from constants import *
 
-pygame.init()
-win = Windows(WIDTH, HEIGHT, BACKGROUND_COLOR, CAPTION)
-pygame.display.flip()
-
-snake = Snake(win, SNK_COLOR, SNK_RADIUS, SNK_SPEED, SNK_INIT_POS)
-apple = Apple(win, APL_COLOR, APL_RADIUS)
+from keyboard_controller import Controller, KeyboardController
+from snake_model import SnakeModel
+from snake_views import GameSurface, Window
 
 
-def update(apl_recenter, snk_direction):
+class Game:
+    APPLE_REPOSITION_RATE: int = 50
+    FPS: int = 8
 
-    win.update()
-    apple.update(apl_recenter)
-    snake.update(snk_direction)
-    if snake.check_eat(apple):
-        apple.update(True)
-        apple.recenter_count = 0
-    pygame.display.flip()
-    snake.check_hit()
+    def __init__(self, human: bool = True):
+        self.human: bool = human
+        if human:
+            self.window: Window = Window()
+            self.model: SnakeModel = SnakeModel(
+                Game.APPLE_REPOSITION_RATE,
+                GameSurface.WIDTH,
+                GameSurface.HEIGHT)
+            self.controller: Controller = KeyboardController(self.model)
+        else:
+            # TODO add ML model
+            pass
+
+    def run(self):
+        running: bool = True
+        while running:
+            if self.human:
+                pygame.time.Clock().tick(Game.FPS)
+            self.controller.update_direction()
+            self.window.update(self.model)
+            if (self.controller.quit
+               or self.model.snake_dead
+               or self.model.victory):
+                running = False
 
 
-running = True
-snk_direction = SNK_DIR["UP"]
-
-while running:
-    pygame.time.Clock().tick(FPS)
-    apl_recenter = False
-    apple.recenter_count += 1
-
-    new_direction = snk_direction
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-        if event.type == pygame.KEYDOWN:
-            if (event.key == pygame.K_LEFT) and not (snk_direction == SNK_DIR["RIGHT"]):
-                new_direction = SNK_DIR["LEFT"]
-            if (event.key == pygame.K_RIGHT) and not (snk_direction == SNK_DIR["LEFT"]):
-                new_direction = SNK_DIR["RIGHT"]
-            if (event.key == pygame.K_UP) and not (snk_direction == SNK_DIR["DOWN"]):
-                new_direction = SNK_DIR["UP"]
-            if (event.key == pygame.K_DOWN) and not (snk_direction == SNK_DIR["UP"]):
-                new_direction = SNK_DIR["DOWN"]
-    snk_direction = new_direction
-    if apple.recenter_count >= (APL_UPDATE_RATE * FPS):
-        apl_recenter = True
-        apple.recenter_count = 0
-    update(apl_recenter, snk_direction)
-    if snake.hit:
-        running = False
-
+game = Game(True)
+game.run()
