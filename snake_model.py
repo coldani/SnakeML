@@ -162,6 +162,19 @@ class SnakeModel:
         """
         return (position[0]+direction.value[0], position[1]+direction.value[1])
 
+    def normalise_value(self, value, min, max, a, b):
+        """Returns the normalised value, where the smallest possible value is
+        mapped to a and the largest to b
+
+        Args:
+            value: the input value to be normalised
+            min: the minimum possible value
+            max: the maximum possible value
+            a: start of range
+            b: end of range
+        """
+        return a + (value - min)*(b-a)/(max-min)
+
     def relative_distance_to(self, current_direction: Directions,
                              object_position: Position) -> tuple[int, int]:
         """Returns the distance to an object, relative to the direction taken by
@@ -193,7 +206,20 @@ class SnakeModel:
             distance_right = head_position[1] - object_position[1]
         return (distance_ahead, distance_right)
 
-    def relative_distance_to_obstacles(self, current_direction: Directions) -> tuple[int, int, int]:
+    def normalised_relative_distance_to(self, current_direction: Directions,
+                                        object_position: Position) -> tuple[int, int]:
+        """Returns the distance to an object normalised in range [-1, 1]"""
+        distance_ahead, distance_right = self.relative_distance_to(
+            current_direction,
+            object_position)
+        min = 1
+        maxi = max(self.width, self.height)
+        a = -1
+        b = 1
+        return (self.normalise_value(distance_ahead, min, maxi, a, b),
+                self.normalise_value(distance_right, min, maxi, a, b))
+
+    def distance_to_obstacles(self, current_direction: Directions) -> tuple[int, int, int]:
         """Computes the distance to the closest obstacle from head of snake in
          each direction (ahead, right, left). Note minimum distance is 1 to make
          it consistent with `self.relative_distance_to()`
@@ -214,9 +240,23 @@ class SnakeModel:
 
         return (dist_ahead, dist_right, dist_left)
 
+    def normalised_distance_to_obstacles(
+            self, current_direction: Directions) -> tuple[float, float, float]:
+        """Computes the distance to closes obstacle in each direction (ahead, 
+        right, left) normalised in [-1, 1] range."""
+        dist_ahead, dist_right, dist_left = self.distance_to_obstacles(
+            current_direction)
+        min = 1
+        maxi = max(self.width, self.height)
+        a = -1
+        b = 1
+        return (self.normalise_value(dist_ahead, min, maxi, a, b),
+                self.normalise_value(dist_right, min, maxi, a, b),
+                self.normalise_value(dist_left, min, maxi, a, b))
+
     def closest_obstacle(self, direction: Directions) -> int:
         """Returns the distance to the closest obstacle from head of snake in
-        the given direction """
+        the given direction. Minimum distance is 1"""
         free_positions: set[Position] = self.free_positions()
         position: Position = self.snake_positions[0]
         position = (position[0] + direction.value[0],
@@ -227,6 +267,16 @@ class SnakeModel:
             position = (position[0] + direction.value[0],
                         position[1] + direction.value[1])
         return distance
+
+    def normalised_closest_obstacle(self, direction: Directions) -> int:
+        """Returns the distance to the closest obstacle in the given direction,
+        normalised in range [-1, 1]"""
+        distance = self.closest_obstacle(direction)
+        min = 1
+        maxi = max(self.width, self.height)
+        a = -1
+        b = 1
+        return self.normalise_value(distance, min, maxi, a, b)
 
     def regions_density(self, current_direction: Directions,
                         edge_length: int = 4) -> tuple[int, int, int, int]:
@@ -253,6 +303,21 @@ class SnakeModel:
             current_direction.left(), edge_length)
 
         return (ahead_right, back_right, back_left, ahead_left)
+
+    def normalised_regions_density(self, current_direction: Directions,
+                                   edge_length: int = 4) -> tuple[float, float, float, float]:
+        """Returns the regions density normalised in the range [-1, 1]"""
+        ahead_right, back_right, back_left, ahead_left = self.regions_density(
+            current_direction,
+            edge_length)
+        min = 0
+        maxi = edge_length**2
+        a = -1
+        b = 1
+        return (self.normalise_value(ahead_right, min, maxi, a, b),
+                self.normalise_value(back_right, min, maxi, a, b),
+                self.normalise_value(back_left, min, maxi, a, b),
+                self.normalise_value(ahead_left, min, maxi, a, b))
 
     def single_region_density(
             self, edge_direction: Directions, edge_length: int) -> int:
