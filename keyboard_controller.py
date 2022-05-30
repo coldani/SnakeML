@@ -24,7 +24,6 @@ class KeyboardController(Controller):
         """
         self.model: SnakeModel = model
         self.direction: Directions = Directions.RIGHT
-        self.quit: bool = False
 
     def update_direction(self):
         """
@@ -33,8 +32,6 @@ class KeyboardController(Controller):
         """
         key: int = None
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.quit = True
             if event.type == pygame.KEYDOWN:
                 key = event.key
 

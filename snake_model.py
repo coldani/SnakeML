@@ -12,6 +12,26 @@ class Directions(enum.Enum):
     RIGHT = (1, 0)
     LEFT = (-1, 0)
 
+    def right(self):
+        if self == Directions.UP:
+            return Directions.RIGHT
+        elif self == Directions.RIGHT:
+            return Directions.DOWN
+        elif self == Directions.DOWN:
+            return Directions.LEFT
+        elif self == Directions.LEFT:
+            return Directions.UP
+
+    def left(self):
+        if self == Directions.UP:
+            return Directions.LEFT
+        elif self == Directions.LEFT:
+            return Directions.DOWN
+        elif self == Directions.DOWN:
+            return Directions.RIGHT
+        elif self == Directions.RIGHT:
+            return Directions.UP
+
 
 class SnakeModel:
     def __init__(self, apple_reposition_rate: int, width: int, height: int):
@@ -22,7 +42,7 @@ class SnakeModel:
         Args:
             apple_reposition_rate (int): number of steps after which apple is
             repositioned
-            width (int, optional): Width of the grid
+            width (int, optional): width of the grid
             height (int, optional): height of the grid
         """
         self.width: int = width
@@ -38,6 +58,11 @@ class SnakeModel:
         self.victory: bool = False
         self.score: int = 0
         self.apple_reposition_counter: int = 0
+        self.snake_stuck_counter: int = 0
+
+    def snake_length(self):
+        """Returns the length of the snake"""
+        return len(self.snake_positions)
 
     def free_positions(self) -> set[Position]:
         """
@@ -61,19 +86,29 @@ class SnakeModel:
 
         grow_flag = False
         new_position = self.next_position(self.snake_positions[0], direction)
+        # dead
         if new_position not in self.free_positions():
             self.snake_dead = True
+        # eats apple
         elif self.is_apple_eaten(new_position):
             self.score += 1
+            self.snake_stuck_counter = 0
             grow_flag = True
             self.reposition_apple()
+        # apple moves
         elif self.apple_reposition_counter > self.apple_reposition_rate:
             self.reposition_apple()
 
+        # make actual move, grow snake if necessary
         self.move_snake(new_position, grow_flag)
+
+        # check if victory
         if len(self.free_positions()) == 0:
             self.victory = True
+
+        # increase counters
         self.apple_reposition_counter += 1
+        self.snake_stuck_counter += 1
 
     def move_snake(self, new_position: Position, grow_flag: bool):
         """Recomputes snake positions
@@ -126,3 +161,142 @@ class SnakeModel:
             Position: New position
         """
         return (position[0]+direction.value[0], position[1]+direction.value[1])
+
+    def relative_distance_to(self, current_direction: Directions,
+                             object_position: Position) -> tuple[int, int]:
+        """Returns the distance to an object, relative to the direction taken by
+        the head of the snake. An object 2 positions ahead of the head of the
+        snake would return (2, 0), an object 2 positions to the right would
+        return (0, 2), an object 1 position back and to the left would return
+        (-1, -1)
+
+        Args:
+            current_direction (Directions): direction of the head of the snake
+            object_position (Position): position of the object on the grid
+
+        Returns:
+            tuple[int, int]: (distance_ahead, distance_right) - negative values
+            mean the object is behind and/or to the left
+        """
+        head_position: Position = self.snake_positions[0]
+        if current_direction == Directions.DOWN:
+            distance_ahead = object_position[1] - head_position[1]
+            distance_right = head_position[0] - object_position[0]
+        if current_direction == Directions.UP:
+            distance_ahead = head_position[1] - object_position[1]
+            distance_right = object_position[0] - head_position[0]
+        if current_direction == Directions.RIGHT:
+            distance_ahead = object_position[0] - head_position[0]
+            distance_right = object_position[1] - head_position[1]
+        if current_direction == Directions.LEFT:
+            distance_ahead = head_position[0] - object_position[0]
+            distance_right = head_position[1] - object_position[1]
+        return (distance_ahead, distance_right)
+
+    def relative_distance_to_obstacles(self, current_direction: Directions) -> tuple[int, int, int]:
+        """Computes the distance to the closest obstacle from head of snake in
+         each direction (ahead, right, left). Note minimum distance is 1 to make
+         it consistent with `self.relative_distance_to()`
+
+        Args:
+            current_direction (Directions): Current direction of head of snake
+
+        Returns:
+            tuple[int, int, int]: distance to closest obstacle in each direction
+            (ahead, right, left)
+        """
+        dir_right: Directions = current_direction.right()
+        dir_left: Directions = current_direction.left()
+
+        dist_ahead: int = self.closest_obstacle(current_direction)
+        dist_right: int = self.closest_obstacle(dir_right)
+        dist_left: int = self.closest_obstacle(dir_left)
+
+        return (dist_ahead, dist_right, dist_left)
+
+    def closest_obstacle(self, direction: Directions) -> int:
+        """Returns the distance to the closest obstacle from head of snake in
+        the given direction """
+        free_positions: set[Position] = self.free_positions()
+        position: Position = self.snake_positions[0]
+        position = (position[0] + direction.value[0],
+                    position[1] + direction.value[1])
+        distance: int = 1
+        while position in free_positions:
+            distance += 1
+            position = (position[0] + direction.value[0],
+                        position[1] + direction.value[1])
+        return distance
+
+    def regions_density(self, current_direction: Directions,
+                        edge_length: int = 4) -> tuple[int, int, int, int]:
+        """Computes the number of free positions in the four regions ahead/right,
+        backward/right, backward/left, ahead/left relative to head of snake
+
+        Args:
+            current_direction (Directions): Current direction of head of snake
+            edge_length (int, optional): Length of the region edge, e.g. the
+            regions are squares area equal to `edge_length*edge_length`.
+            Defaults to 4.
+
+        Returns:
+            tuple[int, int, int, int]: Number of free positions in regions
+            (ahead/right, backward/right, backward/left, ahead/left) relative to
+            head of snake
+        """
+        ahead_right = self.single_region_density(current_direction, edge_length)
+        back_right = self.single_region_density(
+            current_direction.right(), edge_length)
+        back_left = self.single_region_density(
+            current_direction.right().right(), edge_length)
+        ahead_left = self.single_region_density(
+            current_direction.left(), edge_length)
+
+        return (ahead_right, back_right, back_left, ahead_left)
+
+    def single_region_density(
+            self, edge_direction: Directions, edge_length: int) -> int:
+        """Computes the density of the single region with one edge going from
+        head of snake in `edge_direction`direction and the second edge equal to
+        `edge_direction.right()`.
+
+        Args:
+            edge_direction (Directions): Direction of first edge. Direction of
+            second edge is `edge_direction.right()`
+            edge_length (int): Length of region edges
+
+        Returns:
+            int: Number of free positions in the region
+        """
+        second_edge_direction: Directions = edge_direction.right()
+
+        # vertex of the region closest to head of snake
+        vertex_1: Position = self.snake_positions[0]
+        vertex_1 = (vertex_1[0] + edge_direction.value[0],
+                    vertex_1[1] + edge_direction.value[1])
+        vertex_1 = (vertex_1[0] + second_edge_direction.value[0],
+                    vertex_1[1] + second_edge_direction.value[1])
+
+        # vertex of the region farthest from head of snake
+        vertex_2 = (
+            vertex_1[0] + edge_direction.value[0] * (edge_length),
+            vertex_1[1] + edge_direction.value[1] * (edge_length))
+        vertex_2 = (
+            vertex_2[0] + second_edge_direction.value[0] * (edge_length),
+            vertex_2[1] + second_edge_direction.value[1] * (edge_length))
+
+        # computes all positions in the region
+        start_horiz: int = vertex_1[0]
+        end_horiz: int = vertex_2[0]
+        step_horiz: int = 1 if end_horiz >= start_horiz else -1
+        start_vert: int = vertex_1[1]
+        end_vert: int = vertex_2[1]
+        step_vert: int = 1 if end_vert >= start_vert else -1
+
+        region_positions: set[Position] = set(
+            itertools.product(
+                range(start_horiz, end_horiz, step_horiz),
+                range(start_vert, end_vert, step_vert)))
+
+        # returns size of intersection between free_positions and region_positions
+        return len(self.free_positions().intersection(region_positions))
