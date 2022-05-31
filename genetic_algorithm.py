@@ -1,3 +1,4 @@
+import time
 from math import sqrt
 
 import numpy as np
@@ -156,6 +157,9 @@ class GeneticAlgorithm:
             individual every print_frequency epoch. Defaults to 0 (i.e. nothing 
             is printed).
         """
+
+        start = time.process_time()
+
         for epoch in range(epochs):
             fitness = self.calculate_fitness(num_matches, stuck_threshold)
             self.population = self.new_population(fitness)
@@ -170,3 +174,14 @@ class GeneticAlgorithm:
                 print(f"Epoch: {epoch}" +
                       f" - max fitness: {np.max(fitness)}," +
                       f" avg fitness: {np.average(fitness)}")
+
+        end = time.process_time()
+        elapsed = end - start
+        if print_frequency > 0:
+            hour = elapsed // 3600
+            min = (elapsed % 3600) // 60
+            sec = (elapsed % 3600) % 60
+            print(
+                f"Trained {epochs} epochs " +
+                f"(population size: {self.pop_size}, games played: {num_matches}) " +
+                f"in {hour:.0f}h {min:.0f}m {sec:.0f}s")

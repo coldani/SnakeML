@@ -1,0 +1,4 @@
+#!/bin/sh
+. venv/bin/activate > output/output.log 2> output/error.log
+pip install -r requirements.txt > output/output.log 2> output/error.log
+python3 train.py > output/output.log 2> output/error.log
