@@ -1,19 +1,18 @@
+import numpy as np
 import pygame
-from ML_controller import MLController
 
 from keyboard_controller import Controller, KeyboardController
+from ML_controller import MLController
 from snake_model import SnakeModel
 from snake_views import GameSurface, Window
-import numpy as np
 
 
 class Game:
-    APPLE_REPOSITION_RATE: int = 50
     FPS: int = 8
 
     def __init__(
             self, human: bool = True, weights: np.ndarray = None,
-            layers_size: list[int] = None):
+            layers_size: list[int] = None, apple_reposition_rate: int = 50):
         """Class that implements the snake game. Can be played either by a human
         with the keyboard or by the computer, with the direction updated by a 
         feedforward neural network
@@ -27,10 +26,12 @@ class Game:
             layers_size (list[int], optional): Number of neurons for each layer
                 of the neural network, only used if human == False . 
                 Defaults to None.
+            apple_reposition_rate (int, optional): Number of steps after which to
+                reposition the apple. Defaults to 50.
         """
 
         self.model: SnakeModel = SnakeModel(
-            Game.APPLE_REPOSITION_RATE,
+            apple_reposition_rate,
             GameSurface.WIDTH,
             GameSurface.HEIGHT)
         if human:
@@ -41,13 +42,16 @@ class Game:
             self.controller: Controller = MLController(
                 self.model, weights, layers_size)
 
-    def run(self, display=True):
+    def run(self, display=True, stuck_counter_threshold: int = 1000):
         """Runs the game
 
         Args:
             display (bool, optional): If True, it displays the game. Only set to
                 False when training the neural network.
                 Defaults to True.
+            stuck_counter_threshold (int, optional): number of steps after which
+            the game ends if the snake is has not eaten an apple.
+            Defaults to 1000.
         """
         if display:
             window: Window = Window()
@@ -62,8 +66,11 @@ class Game:
             if display:
                 window.update(self.model)
             if (self.model.snake_dead
-               or self.model.victory or self.model.snake_stuck_counter > 1000):
+               or self.model.victory
+               or self.model.snake_stuck_counter > stuck_counter_threshold):
                 running = False
+        if display:
+            pygame.quit()
 
 
 if __name__ == "__main__":

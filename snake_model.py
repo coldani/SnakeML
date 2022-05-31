@@ -212,8 +212,8 @@ class SnakeModel:
         distance_ahead, distance_right = self.relative_distance_to(
             current_direction,
             object_position)
-        min = 1
         maxi = max(self.width, self.height)
+        min = -maxi
         a = -1
         b = 1
         return (self.normalise_value(distance_ahead, min, maxi, a, b),
