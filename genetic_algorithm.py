@@ -1,5 +1,6 @@
 import time
 from math import sqrt
+from typing import List
 
 import numpy as np
 
@@ -9,7 +10,7 @@ from ML_controller import FeedForwardNetwork
 
 class GeneticAlgorithm:
     def __init__(
-            self, pop_size: int, layers_size: list[int]) -> None:
+            self, pop_size: int, layers_size: List[int]) -> None:
         """Implements a genetic algorithm used to train a neural network on the
         Snake game. 
         Specifically, it implements a "(mu + lambda) - ES" model, with adaptive
@@ -17,22 +18,22 @@ class GeneticAlgorithm:
 
         Args:
             -pop_size (int): Size of the population on each epoch
-            -layers_size (list[int]): Number of neurons (exluding the bias) 
+            -layers_size (List[int]): Number of neurons (exluding the bias) 
                 on each network layer, excluding the output layer
         """
 
         self.pop_size: int = pop_size
         layers_size.append(3)  # final layer with 3 directions
-        self.layers_size: list[int] = layers_size
+        self.layers_size: List[int] = layers_size
 
         self.parents_size: int = pop_size // 6
         self.offspring_size: int = pop_size - self.parents_size
         self.tau: float = 1 / sqrt(
             FeedForwardNetwork.calc_num_weights(layers_size))
         self.population: np.ndarray = self.generate_random_population()
-        self.best_fitness_evolution: list[int] = []
-        self.avg_fitness_evolution: list[int] = []
-        self.fittest_individual: list[np.ndarray] = []
+        self.best_fitness_evolution: List[int] = []
+        self.avg_fitness_evolution: List[int] = []
+        self.fittest_individual: List[np.ndarray] = []
 
     def generate_random_population(self) -> np.ndarray:
         """Helper function used to initialise a random population (i.e. a random

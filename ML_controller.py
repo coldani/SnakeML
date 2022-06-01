@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import numpy as np
 
 from keyboard_controller import Controller
@@ -6,19 +8,19 @@ from snake_model import Directions, SnakeModel
 
 class MLController(Controller):
     def __init__(self, model: SnakeModel, weights: np.ndarray,
-                 layers_size: list[int]):
+                 layers_size: List[int]):
         """Implements ML controller
 
         Args:
             model (SnakeModel): the instance of the model used for the game
             weights (np.ndarray): Unrolled weights for the neural network
-            layers_size (list[int]): List with number of neurons for each layer 
+            layers_size (List[int]): List with number of neurons for each layer 
                                     of the network. Output layer size must be 
                                     equal to 3.
         """
         self.model: SnakeModel = model
         self.weights: np.ndarray = weights
-        self.layers_size: list[int] = layers_size
+        self.layers_size: List[int] = layers_size
 
         self.direction: Directions = Directions.RIGHT
         assert self.layers_size[-1] == 3, "Output layer must have 3 neurons"
@@ -66,26 +68,26 @@ class FeedForwardNetwork:
     neural network
     """
     @staticmethod
-    def num_neurons(layers_size: list[int], layer: int) -> tuple[int, int]:
+    def num_neurons(layers_size: List[int], layer: int) -> Tuple[int, int]:
         """Returns number of input and output neurons for a given layer
 
         Args:
-            layers_size (list[int]): List with number of neurons for each layer 
+            layers_size (List[int]): List with number of neurons for each layer 
                                     of the network
             layer (int): Index of input layer
 
         Returns:
-            tuple[int, int]: Number of neurons the given layer and the next layer
+            Tuple[int, int]: Number of neurons the given layer and the next layer
         """
         return (layers_size[layer], layers_size[layer+1])
 
     @staticmethod
-    def calc_num_weights(layers_size: list[int]) -> int:
+    def calc_num_weights(layers_size: List[int]) -> int:
         """Returns the total number of weights for a given network, including
         the bias
 
         Args:
-            layers_size (list[int]): List with number of neurons for each layer
+            layers_size (List[int]): List with number of neurons for each layer
             of the network, excluding the bias
 
         Returns:
@@ -98,7 +100,7 @@ class FeedForwardNetwork:
         return num_weights
 
     @staticmethod
-    def random_weights(pop_size: int, layers_size: list[int]) -> np.ndarray:
+    def random_weights(pop_size: int, layers_size: List[int]) -> np.ndarray:
         """Applies Xavier Glorot random weights initialisation. Note that given 
         this network is used for a genetic algorithm, weights are not shared 
         by individuals.
@@ -106,7 +108,7 @@ class FeedForwardNetwork:
         Args:
             pop_size (int): Number of individuals (e.g. number of rows in the 
             weights matrix)
-            layers_size (list[int]): List with number of neurons for each layer
+            layers_size (List[int]): List with number of neurons for each layer
             of the network, excluding the bias
 
         Returns:
@@ -147,7 +149,7 @@ class FeedForwardNetwork:
 
     @staticmethod
     def feed_forward(weights: np.ndarray, input: np.ndarray,
-                     layers_size: list[int]) -> np.ndarray:
+                     layers_size: List[int]) -> np.ndarray:
         """Computes one forward pass on the network. Activation function is relu
         for inner layers and softmax for output layer
 
@@ -155,7 +157,7 @@ class FeedForwardNetwork:
             weights (np.ndarray): One unrolled array of weights for the entire 
             network
             input (np.ndarray): Input layer
-            layers_size (list[int]): List with number of neurons for each layer
+            layers_size (List[int]): List with number of neurons for each layer
 
         Returns:
             np.ndarray: Softmax activation of the output layer

@@ -1,7 +1,7 @@
 import enum
 import itertools
 import random
-from typing import Tuple
+from typing import Tuple, List, Set
 
 Position = Tuple[int, int]  # [left, top]
 
@@ -49,9 +49,9 @@ class SnakeModel:
         self.height: int = height
         self.apple_reposition_rate: int = apple_reposition_rate
 
-        self.grid: set[Position] = set(
+        self.grid: Set[Position] = set(
             itertools.product(range(width), range(height)))
-        self.snake_positions: list[Position] = [(width // 2, height // 2)]
+        self.snake_positions: List[Position] = [(width // 2, height // 2)]
         self.apple_position: Position = self.random_free_position()
 
         self.snake_dead: bool = False
@@ -64,13 +64,13 @@ class SnakeModel:
         """Returns the length of the snake"""
         return len(self.snake_positions)
 
-    def free_positions(self) -> set[Position]:
+    def free_positions(self) -> Set[Position]:
         """
         Returns the set of positions not occupied by the snake.
         Note it includes the position of the apple
 
         Returns:
-            set[Position]: set of positions not occupied by the snake
+            Set[Position]: set of positions not occupied by the snake
         """
         return self.grid.difference(set(self.snake_positions))
 
@@ -176,7 +176,7 @@ class SnakeModel:
         return a + (value - min)*(b-a)/(max-min)
 
     def relative_distance_to(self, current_direction: Directions,
-                             object_position: Position) -> tuple[int, int]:
+                             object_position: Position) -> Tuple[int, int]:
         """Returns the distance to an object, relative to the direction taken by
         the head of the snake. An object 2 positions ahead of the head of the
         snake would return (2, 0), an object 2 positions to the right would
@@ -188,7 +188,7 @@ class SnakeModel:
             object_position (Position): position of the object on the grid
 
         Returns:
-            tuple[int, int]: (distance_ahead, distance_right) - negative values
+            Tuple[int, int]: (distance_ahead, distance_right) - negative values
             mean the object is behind and/or to the left
         """
         head_position: Position = self.snake_positions[0]
@@ -207,7 +207,7 @@ class SnakeModel:
         return (distance_ahead, distance_right)
 
     def normalised_relative_distance_to(self, current_direction: Directions,
-                                        object_position: Position) -> tuple[int, int]:
+                                        object_position: Position) -> Tuple[int, int]:
         """Returns the distance to an object normalised in range [-1, 1]"""
         distance_ahead, distance_right = self.relative_distance_to(
             current_direction,
@@ -219,7 +219,7 @@ class SnakeModel:
         return (self.normalise_value(distance_ahead, min, maxi, a, b),
                 self.normalise_value(distance_right, min, maxi, a, b))
 
-    def distance_to_obstacles(self, current_direction: Directions) -> tuple[int, int, int]:
+    def distance_to_obstacles(self, current_direction: Directions) -> Tuple[int, int, int]:
         """Computes the distance to the closest obstacle from head of snake in
          each direction (ahead, right, left). Note minimum distance is 1 to make
          it consistent with `self.relative_distance_to()`
@@ -228,7 +228,7 @@ class SnakeModel:
             current_direction (Directions): Current direction of head of snake
 
         Returns:
-            tuple[int, int, int]: distance to closest obstacle in each direction
+            Tuple[int, int, int]: distance to closest obstacle in each direction
             (ahead, right, left)
         """
         dir_right: Directions = current_direction.right()
@@ -241,7 +241,7 @@ class SnakeModel:
         return (dist_ahead, dist_right, dist_left)
 
     def normalised_distance_to_obstacles(
-            self, current_direction: Directions) -> tuple[float, float, float]:
+            self, current_direction: Directions) -> Tuple[float, float, float]:
         """Computes the distance to closes obstacle in each direction (ahead, 
         right, left) normalised in [-1, 1] range."""
         dist_ahead, dist_right, dist_left = self.distance_to_obstacles(
@@ -257,7 +257,7 @@ class SnakeModel:
     def closest_obstacle(self, direction: Directions) -> int:
         """Returns the distance to the closest obstacle from head of snake in
         the given direction. Minimum distance is 1"""
-        free_positions: set[Position] = self.free_positions()
+        free_positions: Set[Position] = self.free_positions()
         position: Position = self.snake_positions[0]
         position = (position[0] + direction.value[0],
                     position[1] + direction.value[1])
@@ -279,7 +279,7 @@ class SnakeModel:
         return self.normalise_value(distance, min, maxi, a, b)
 
     def regions_density(self, current_direction: Directions,
-                        edge_length: int = 4) -> tuple[int, int, int, int]:
+                        edge_length: int = 4) -> Tuple[int, int, int, int]:
         """Computes the number of free positions in the four regions ahead/right,
         backward/right, backward/left, ahead/left relative to head of snake
 
@@ -290,7 +290,7 @@ class SnakeModel:
             Defaults to 4.
 
         Returns:
-            tuple[int, int, int, int]: Number of free positions in regions
+            Tuple[int, int, int, int]: Number of free positions in regions
             (ahead/right, backward/right, backward/left, ahead/left) relative to
             head of snake
         """
@@ -305,7 +305,7 @@ class SnakeModel:
         return (ahead_right, back_right, back_left, ahead_left)
 
     def normalised_regions_density(self, current_direction: Directions,
-                                   edge_length: int = 4) -> tuple[float, float, float, float]:
+                                   edge_length: int = 4) -> Tuple[float, float, float, float]:
         """Returns the regions density normalised in the range [-1, 1]"""
         ahead_right, back_right, back_left, ahead_left = self.regions_density(
             current_direction,
@@ -358,7 +358,7 @@ class SnakeModel:
         end_vert: int = vertex_2[1]
         step_vert: int = 1 if end_vert >= start_vert else -1
 
-        region_positions: set[Position] = set(
+        region_positions: Set[Position] = set(
             itertools.product(
                 range(start_horiz, end_horiz, step_horiz),
                 range(start_vert, end_vert, step_vert)))

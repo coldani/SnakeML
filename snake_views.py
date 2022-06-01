@@ -1,5 +1,5 @@
 import string
-from typing import Tuple
+from typing import Tuple, List
 
 import pygame
 
@@ -131,11 +131,11 @@ class Snake:
         return (x >= 0 and y >= 0 and
                 x < GameSurface.WIDTH and y < GameSurface.HEIGHT)
 
-    def update(self, positions: list[Position]):
+    def update(self, positions: List[Position]):
         """Updates the snake view
 
         Args:
-            positions (list[Position]): list of unscaled positions of snake
+            positions (List[Position]): list of unscaled positions of snake
             head (first element) and body relative to top-left corner of
             GameSurface
         """

@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pygame
 
@@ -12,7 +14,7 @@ class Game:
 
     def __init__(
             self, human: bool = True, weights: np.ndarray = None,
-            layers_size: list[int] = None, apple_reposition_rate: int = 50):
+            layers_size: List[int] = None, apple_reposition_rate: int = 50):
         """Class that implements the snake game. Can be played either by a human
         with the keyboard or by the computer, with the direction updated by a 
         feedforward neural network
@@ -23,7 +25,7 @@ class Game:
             weights (np.ndarray, optional): Unrolled weights for the neural
                 network, only used if human == False. 
                 Defaults to None.
-            layers_size (list[int], optional): Number of neurons for each layer
+            layers_size (List[int], optional): Number of neurons for each layer
                 of the neural network, only used if human == False . 
                 Defaults to None.
             apple_reposition_rate (int, optional): Number of steps after which to
