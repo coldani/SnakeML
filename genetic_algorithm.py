@@ -174,7 +174,8 @@ class GeneticAlgorithm:
             if print_frequency > 0 and epoch % print_frequency == 0:
                 print(f"Epoch: {epoch}" +
                       f" - max fitness: {np.max(fitness)}," +
-                      f" avg fitness: {np.average(fitness)}")
+                      f" avg fitness: {np.average(fitness)}",
+                      flush=True)
 
         end = time.process_time()
         elapsed = end - start
@@ -185,4 +186,5 @@ class GeneticAlgorithm:
             print(
                 f"Trained {epochs} epochs " +
                 f"(population size: {self.pop_size}, games played: {num_matches}) " +
-                f"in {hour:.0f}h {min:.0f}m {sec:.0f}s")
+                f"in {hour:.0f}h {min:.0f}m {sec:.0f}s",
+                flush=True)

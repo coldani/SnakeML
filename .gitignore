@@ -1,6 +1,6 @@
 .vscode/
 __pycache__/
-venv
+venv*
 .flake8
 test.py
 output
