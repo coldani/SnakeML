@@ -24,16 +24,23 @@ parser.add_argument(
     help="Number of steps without eating an apple allowed before terminating the game",
     default=200)
 
+parser.add_argument(
+    '--layers', '-l', type=int, nargs='+', dest='layers_size',
+    help="Number of neurons in each of the neural network layers, excluding the output layer (which has 3 neurons by design)",
+    default=[10, 10, 10])
+
 args = parser.parse_args()
 pop_size = args.pop_size
 num_epochs = args.epochs
 num_matches = args.matches
 stuck_threshold = args.stuck_threshold
+layers_size = args.layers_size
+print(layers_size)
 
 # END OF ARGUMENTS PARSING
 
 
-model = GeneticAlgorithm(pop_size, [10, 10, 10])
+model = GeneticAlgorithm(pop_size, layers_size)
 model.train(num_epochs, num_matches, print_frequency=1,
             stuck_threshold=stuck_threshold)
 

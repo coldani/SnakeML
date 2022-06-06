@@ -1,13 +1,14 @@
 #!/bin/sh
 
 # parse command line arguments
-while getopts s:e:m:t: flag
+while getopts s:e:m:t:l: flag
 do
     case "${flag}" in
         s) pop_size=${OPTARG};;
         e) num_epochs=${OPTARG};;
         m) num_matches=${OPTARG};;
         t) stuck_threshold=${OPTARG};;
+        l) layers_size=${OPTARG};;
     esac
 done
 
@@ -16,4 +17,5 @@ done
 pip install -r requirements.txt > output/output.log 2> output/error.log
 
 # train
-python3 train.py -s $pop_size -e $num_epochs -m $num_matches -t $stuck_threshold > output/output.log 2> output/error.log
+python3 train.py -s $pop_size -e $num_epochs -m $num_matches -t $stuck_threshold \
+-l $layers_size > output/output.log 2> output/error.log
