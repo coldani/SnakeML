@@ -185,6 +185,7 @@ class GeneticAlgorithm:
             sec = (elapsed % 3600) % 60
             print(
                 f"Trained {epochs} epochs " +
-                f"(population size: {self.pop_size}, games played: {num_matches}) " +
+                f"(network layers: {self.layers_size}, population size: {self.pop_size}, " +
+                f"games played: {num_matches}, stuck threshold: {stuck_threshold}) " +
                 f"in {hour:.0f}h {min:.0f}m {sec:.0f}s",
                 flush=True)

@@ -19,16 +19,25 @@ parser.add_argument(
     help="Number of matches played by each individual to calculate fitness",
     default=1)
 
+parser.add_argument(
+    '--threshold', '-t', type=int, nargs='?', dest='stuck_threshold',
+    help="Number of steps without eating an apple allowed before terminating the game",
+    default=200)
+
 args = parser.parse_args()
 pop_size = args.pop_size
 num_epochs = args.epochs
 num_matches = args.matches
+stuck_threshold = args.stuck_threshold
 
 # END OF ARGUMENTS PARSING
 
 
 model = GeneticAlgorithm(pop_size, [10, 10, 10])
-model.train(num_epochs, num_matches, print_frequency=1)
+model.train(num_epochs, num_matches, print_frequency=1,
+            stuck_threshold=stuck_threshold)
 
-with open("saved_models/model.pickle", "wb") as f:
+layers_str = '_'.join(str(x) for x in model.layers_size)
+name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_t{stuck_threshold}"
+with open(f"saved_models/{name}.pickle", "wb") as f:
     pickle.dump(model, f)
