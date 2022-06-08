@@ -1,5 +1,7 @@
 import time
+from concurrent.futures import ProcessPoolExecutor
 from math import sqrt
+from multiprocessing import cpu_count
 from typing import List
 
 import numpy as np
@@ -114,7 +116,7 @@ class GeneticAlgorithm:
         for individual in range(self.pop_size):
             weights = self.population[individual, :-1][np.newaxis, :]
             for match in range(num_matches):
-                # Note we don't want to reposition the apple after training
+                # Note we don't want to reposition the apple during training
                 game = Game(False, weights, self.layers_size, stuck_threshold+1)
                 game.run(False, stuck_threshold)
                 fitness[individual] += game.model.score

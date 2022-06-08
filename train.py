@@ -35,7 +35,6 @@ num_epochs = args.epochs
 num_matches = args.matches
 stuck_threshold = args.stuck_threshold
 layers_size = args.layers_size
-print(layers_size)
 
 # END OF ARGUMENTS PARSING
 

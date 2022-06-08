@@ -12,6 +12,10 @@ do
     esac
 done
 
+# create output directories if needed
+mkdir -p output
+mkdir -p saved_models
+
 # activate environment and install requirements
 . venv/bin/activate > output/output.log 2> output/error.log
 pip install -r requirements.txt > output/output.log 2> output/error.log
