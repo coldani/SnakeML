@@ -1,7 +1,7 @@
 import time
 from concurrent.futures import ProcessPoolExecutor
 from math import sqrt
-from multiprocessing import cpu_count
+import multiprocessing
 from typing import List
 
 import numpy as np
@@ -98,9 +98,11 @@ class GeneticAlgorithm:
         return offsprings
 
     def calculate_fitness(
-            self, num_matches: int, stuck_threshold: int) -> np.ndarray:
-        """Calculates fitness for each individual. Fitness is defined as the 
-        sum of the score of num_matches runs of Snake.
+            self, num_matches: int, stuck_threshold: int, start: int = 0,
+            end: int = None) -> np.ndarray:
+        """Calculates fitness for each individual on indeces from `start` (included) 
+        to `end` (excluded). Fitness is defined as the sum of the score of 
+        `num_matches` runs of Snake.
 
         Args:
             num_matches (int): The number of matches to play to 
@@ -108,19 +110,85 @@ class GeneticAlgorithm:
             stuck_threshold (int): The stuck_counter_threshold used in Game,
                 a lower threshold results in quicker training as the game is
                 stopped earlier in case of no progress.
+            start (int): Starting index for which fitness is calculated. 
+                Defaults to 0.
+            end (int): Ending index (exclusive) for which fitness is calculated.
+                Defaults to None, which means that fitness is calculated for all
+                individuals from index `start` onwards.
 
         Returns:
             np.ndarray: Array with fitness for each individual
         """
-        fitness = np.zeros(self.pop_size)
-        for individual in range(self.pop_size):
+        if end is None:
+            end = self.pop_size
+        fitness = np.zeros(end - start)
+        for individual in range(start, end):
             weights = self.population[individual, :-1][np.newaxis, :]
-            for match in range(num_matches):
-                # Note we don't want to reposition the apple during training
-                game = Game(False, weights, self.layers_size, stuck_threshold+1)
-                game.run(False, stuck_threshold)
-                fitness[individual] += game.model.score
+            fitness[individual - start] += self.calc_individual_fitness(
+                weights, num_matches, stuck_threshold)
+        return fitness
 
+    def calc_individual_fitness(
+            self, individual_weights: np.ndarray, num_matches: int,
+            stuck_threshold: int) -> int:
+        """Calculates fitness for one individual
+
+        Args:
+            individual_weights (np.ndarray): Unrolled weights to be fed in the 
+                neural network
+            num_matches (int): The number of matches to play to calculate an 
+                individual's fitness
+            stuck_threshold (int): The stuck_counter_threshold used in Game,
+                a lower threshold results in quicker training as the game is
+                stopped earlier in case of no progress.
+
+        Returns:
+            int: Fitness of the individual, equal to the sum of the scores on each game
+        """
+        fitness: int = 0
+        for match in range(num_matches):
+            # Note we don't want to reposition the apple during training
+            game = Game(False, individual_weights,
+                        self.layers_size, stuck_threshold+1)
+            game.run(False, stuck_threshold)
+            fitness += game.model.score
+        return fitness
+
+    def multiproc_fitness(
+            self, num_matches: int, stuck_threshold: int) -> np.ndarray:
+        """Calculates the entire population fitness in parallel using all 
+        but one of the machine hardware threads"""
+        pop_size = self.pop_size
+        num_processes = min(multiprocessing.cpu_count()-1, pop_size)
+
+        # if there is only 1 process availably, or population for some reason
+        # only includes 1 individual, train with normal syncronous method
+        if num_processes <= 1:
+            return self.calculate_fitness(num_matches, stuck_threshold)
+
+        # setup iterables
+        n_m = []
+        s_t = []
+        starts = []
+        ends = []
+        start = 0
+        step = (pop_size // num_processes) + (pop_size % num_processes > 0)
+        while start < pop_size:
+            n_m.append(num_matches)
+            s_t.append(stuck_threshold)
+            starts.append(start)
+            ends.append(min(start+step, pop_size))
+            start += step
+
+        # compute fitness in parallel
+        fitness = np.empty(pop_size)
+        with ProcessPoolExecutor(max_workers=num_processes) as executor:
+            for chunk, start, end in zip(
+                    executor.map(
+                        self.calculate_fitness, n_m, s_t, starts, ends,
+                        chunksize=1),
+                    starts, ends):
+                fitness[start: end] = chunk[:]
         return fitness
 
     def new_population(self, fitness: np.ndarray) -> np.ndarray:
@@ -144,27 +212,33 @@ class GeneticAlgorithm:
 
     def train(
             self, epochs: int, num_matches: int = 1, stuck_threshold: int = 200,
-            print_frequency: int = 0):
+            print_frequency: int = 0, multiprocessing: bool = False):
         """Trains the neural network applying the (mu+lambda)-ES algorithm
         On each epoch saves the fittest individual along with its fitness
 
         Args:
-            -epochs (int): Number of training epochs
-            -num_matches (int, optional): Number of Snake matches to play to 
+            epochs (int): Number of training epochs
+            num_matches (int, optional): Number of Snake matches to play to 
                 calculate an individual's fitness. Defaults to 1.
-            -stuck_threshold (int, optional): The stuck_counter_threshold used
+            stuck_threshold (int, optional): The stuck_counter_threshold used
                 in each game to calculate fitness, a lower threshold results in 
                 quicker training as the game is stopped earlier in case of no 
                 progress.
-            -print_frequency (int, optional): If > 0, prints fitness of best 
-            individual every print_frequency epoch. Defaults to 0 (i.e. nothing 
-            is printed).
+            print_frequency (int, optional): If > 0, prints fitness of best 
+                individual every print_frequency epoch. Defaults to 0 (i.e. nothing 
+                is printed).
+            multiprocessing (bool, optional): determines whether training is 
+                performed syncronously (if False) or in parallel using all but
+                one of the machine hardware threads (if True). Defaults to False.
         """
 
-        start = time.process_time()
+        start = time.monotonic()
 
         for epoch in range(epochs):
-            fitness = self.calculate_fitness(num_matches, stuck_threshold)
+            if not multiprocessing:
+                fitness = self.calculate_fitness(num_matches, stuck_threshold)
+            else:
+                fitness = self.multiproc_fitness(num_matches, stuck_threshold)
             self.population = self.new_population(fitness)
 
             self.best_fitness_evolution.append(np.max(fitness))
@@ -174,20 +248,33 @@ class GeneticAlgorithm:
             self.fittest_individual.append(fittest_individual)
 
             if print_frequency > 0 and epoch % print_frequency == 0:
-                print(f"Epoch: {epoch}" +
-                      f" - max fitness: {np.max(fitness)}," +
-                      f" avg fitness: {np.average(fitness)}",
-                      flush=True)
+                self.print_epoch_info(
+                    epoch, np.max(fitness),
+                    np.average(fitness))
 
-        end = time.process_time()
+        end = time.monotonic()
         elapsed = end - start
         if print_frequency > 0:
-            hour = elapsed // 3600
-            min = (elapsed % 3600) // 60
-            sec = (elapsed % 3600) % 60
-            print(
-                f"Trained {epochs} epochs " +
-                f"(network layers: {self.layers_size}, population size: {self.pop_size}, " +
-                f"games played: {num_matches}, stuck threshold: {stuck_threshold}) " +
-                f"in {hour:.0f}h {min:.0f}m {sec:.0f}s",
-                flush=True)
+            self.print_final_info(epochs, num_matches, stuck_threshold, elapsed)
+
+    def print_epoch_info(self, epoch: int, max_fitness: int, avg_fitness: int):
+        """Prints epoch number, maximum fitness in the epoch and average fitness
+          in that epoch"""
+        print(f"Epoch: {epoch}" +
+              f" - max fitness: {max_fitness}," +
+              f" avg fitness: {avg_fitness}",
+              flush=True)
+
+    def print_final_info(self, epochs: int, num_matches: int,
+                         stuck_threshold: int, elapsed: int):
+        """Prints final summary information on training hyperparameters and 
+        total training time"""
+        hour = elapsed // 3600
+        min = (elapsed % 3600) // 60
+        sec = (elapsed % 3600) % 60
+        print(
+            f"Trained {epochs} epochs " +
+            f"(network layers: {self.layers_size}, population size: {self.pop_size}, " +
+            f"games played: {num_matches}, stuck threshold: {stuck_threshold}) " +
+            f"in {hour:.0f}h {min:.0f}m {sec:.0f}s",
+            flush=True)

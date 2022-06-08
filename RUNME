@@ -18,8 +18,13 @@ mkdir -p saved_models
 
 # activate environment and install requirements
 . venv/bin/activate > output/output.log 2> output/error.log
-pip install -r requirements.txt > output/output.log 2> output/error.log
+pip install -r requirements.txt >> output/output.log 2>> output/error.log
+
+# disable pygame annoying message
+export PYGAME_HIDE_SUPPORT_PROMPT="hide"
 
 # train
+out="output/${layers_size}_3_s${pop_size}_e${num_epochs}_m${num_matches}_t${stuck_threshold}.log"
+
 python3 train.py -s $pop_size -e $num_epochs -m $num_matches -t $stuck_threshold \
--l $layers_size > output/output.log 2> output/error.log
+-l $layers_size >> ${out} 2>> output/error.log
