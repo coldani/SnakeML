@@ -152,6 +152,7 @@ class GeneticAlgorithm:
                         self.layers_size, stuck_threshold+1)
             game.run(False, stuck_threshold)
             fitness += game.model.score
+        fitness /= num_matches
         return fitness
 
     def multiproc_fitness(
