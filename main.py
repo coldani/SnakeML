@@ -14,7 +14,8 @@ class Game:
 
     def __init__(
             self, human: bool = True, weights: np.ndarray = None,
-            layers_size: List[int] = None, apple_reposition_rate: int = 50):
+            layers_size: List[int] = None, apple_reposition_rate: int = 50,
+            initial_snake_length: int = 1):
         """Class that implements the snake game. Can be played either by a human
         with the keyboard or by the computer, with the direction updated by a 
         feedforward neural network
@@ -30,12 +31,15 @@ class Game:
                 Defaults to None.
             apple_reposition_rate (int, optional): Number of steps after which to
                 reposition the apple. Defaults to 50.
+            initial_snake_length (int, optional): initial snake length. 
+                Defaults to 1.
         """
 
         self.model: SnakeModel = SnakeModel(
             apple_reposition_rate,
             GameSurface.WIDTH,
-            GameSurface.HEIGHT)
+            GameSurface.HEIGHT,
+            initial_snake_length)
         if human:
             self.controller: Controller = KeyboardController(self.model)
         else:

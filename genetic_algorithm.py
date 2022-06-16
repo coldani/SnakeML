@@ -98,9 +98,9 @@ class GeneticAlgorithm:
         return offsprings
 
     def calculate_fitness(
-            self, num_matches: int, stuck_threshold: int, start: int = 0,
-            end: int = None) -> np.ndarray:
-        """Calculates fitness for each individual on indeces from `start` (included) 
+            self, num_matches: int, stuck_threshold: int, snake_length: int,
+            start: int = 0, end: int = None) -> np.ndarray:
+        """Calculates fitness for each individual on indices from `start` (included) 
         to `end` (excluded). Fitness is defined as the sum of the score of 
         `num_matches` runs of Snake.
 
@@ -110,8 +110,9 @@ class GeneticAlgorithm:
             stuck_threshold (int): The stuck_counter_threshold used in Game,
                 a lower threshold results in quicker training as the game is
                 stopped earlier in case of no progress.
-            start (int): Starting index for which fitness is calculated. 
-                Defaults to 0.
+            snake_length (int): Initial snake length
+            start (int): Starting index of population for which fitness is calculated. 
+                Defaults to 0, i.e. first individual of population.
             end (int): Ending index (exclusive) for which fitness is calculated.
                 Defaults to None, which means that fitness is calculated for all
                 individuals from index `start` onwards.
@@ -125,12 +126,12 @@ class GeneticAlgorithm:
         for individual in range(start, end):
             weights = self.population[individual, :-1][np.newaxis, :]
             fitness[individual - start] += self.calc_individual_fitness(
-                weights, num_matches, stuck_threshold)
+                weights, num_matches, stuck_threshold, snake_length)
         return fitness
 
     def calc_individual_fitness(
             self, individual_weights: np.ndarray, num_matches: int,
-            stuck_threshold: int) -> int:
+            stuck_threshold: int, snake_length: int) -> int:
         """Calculates fitness for one individual
 
         Args:
@@ -141,6 +142,7 @@ class GeneticAlgorithm:
             stuck_threshold (int): The stuck_counter_threshold used in Game,
                 a lower threshold results in quicker training as the game is
                 stopped earlier in case of no progress.
+            snake_length (int): Initial snake length
 
         Returns:
             int: Fitness of the individual, equal to the sum of the scores on each game
@@ -149,14 +151,14 @@ class GeneticAlgorithm:
         for match in range(num_matches):
             # Note we don't want to reposition the apple during training
             game = Game(False, individual_weights,
-                        self.layers_size, stuck_threshold+1)
+                        self.layers_size, stuck_threshold+1, snake_length)
             game.run(False, stuck_threshold)
             fitness += game.model.score
         fitness /= num_matches
         return fitness
 
     def multiproc_fitness(
-            self, num_matches: int, stuck_threshold: int) -> np.ndarray:
+            self, num_matches: int, stuck_threshold: int, snake_length: int) -> np.ndarray:
         """Calculates the entire population fitness in parallel using all 
         but one of the machine hardware threads"""
         pop_size = self.pop_size
@@ -165,11 +167,13 @@ class GeneticAlgorithm:
         # if there is only 1 process availably, or population for some reason
         # only includes 1 individual, train with normal syncronous method
         if num_processes <= 1:
-            return self.calculate_fitness(num_matches, stuck_threshold)
+            return self.calculate_fitness(
+                num_matches, stuck_threshold, snake_length)
 
         # setup iterables
         n_m = []
         s_t = []
+        s_l = []
         starts = []
         ends = []
         start = 0
@@ -177,6 +181,7 @@ class GeneticAlgorithm:
         while start < pop_size:
             n_m.append(num_matches)
             s_t.append(stuck_threshold)
+            s_l.append(snake_length)
             starts.append(start)
             ends.append(min(start+step, pop_size))
             start += step
@@ -186,7 +191,7 @@ class GeneticAlgorithm:
         with ProcessPoolExecutor(max_workers=num_processes) as executor:
             for chunk, start, end in zip(
                     executor.map(
-                        self.calculate_fitness, n_m, s_t, starts, ends,
+                        self.calculate_fitness, n_m, s_t, s_l, starts, ends,
                         chunksize=1),
                     starts, ends):
                 fitness[start: end] = chunk[:]
@@ -213,7 +218,8 @@ class GeneticAlgorithm:
 
     def train(
             self, epochs: int, num_matches: int = 1, stuck_threshold: int = 200,
-            print_frequency: int = 0, multiprocessing: bool = False):
+            snake_length: int = 1, print_frequency: int = 0,
+            multiprocessing: bool = False):
         """Trains the neural network applying the (mu+lambda)-ES algorithm
         On each epoch saves the fittest individual along with its fitness
 
@@ -225,6 +231,7 @@ class GeneticAlgorithm:
                 in each game to calculate fitness, a lower threshold results in 
                 quicker training as the game is stopped earlier in case of no 
                 progress.
+            snake_length (int, optional): initial snake length. Defaults to 1.
             print_frequency (int, optional): If > 0, prints fitness of best 
                 individual every print_frequency epoch. Defaults to 0 (i.e. nothing 
                 is printed).
@@ -237,9 +244,11 @@ class GeneticAlgorithm:
 
         for epoch in range(epochs):
             if not multiprocessing:
-                fitness = self.calculate_fitness(num_matches, stuck_threshold)
+                fitness = self.calculate_fitness(
+                    num_matches, stuck_threshold, snake_length)
             else:
-                fitness = self.multiproc_fitness(num_matches, stuck_threshold)
+                fitness = self.multiproc_fitness(
+                    num_matches, stuck_threshold, snake_length)
             self.population = self.new_population(fitness)
 
             self.best_fitness_evolution.append(np.max(fitness))
@@ -256,7 +265,8 @@ class GeneticAlgorithm:
         end = time.monotonic()
         elapsed = end - start
         if print_frequency > 0:
-            self.print_final_info(epochs, num_matches, stuck_threshold, elapsed)
+            self.print_final_info(epochs, num_matches,
+                                  stuck_threshold, snake_length, elapsed)
 
     def print_epoch_info(self, epoch: int, max_fitness: int, avg_fitness: int):
         """Prints epoch number, maximum fitness in the epoch and average fitness
@@ -267,7 +277,7 @@ class GeneticAlgorithm:
               flush=True)
 
     def print_final_info(self, epochs: int, num_matches: int,
-                         stuck_threshold: int, elapsed: int):
+                         stuck_threshold: int, snake_length: int, elapsed: int):
         """Prints final summary information on training hyperparameters and 
         total training time"""
         hour = elapsed // 3600
@@ -276,6 +286,6 @@ class GeneticAlgorithm:
         print(
             f"Trained {epochs} epochs " +
             f"(network layers: {self.layers_size}, population size: {self.pop_size}, " +
-            f"games played: {num_matches}, stuck threshold: {stuck_threshold}) " +
+            f"games played: {num_matches}, stuck threshold: {stuck_threshold}), snake length: {snake_length} " +
             f"in {hour:.0f}h {min:.0f}m {sec:.0f}s",
             flush=True)

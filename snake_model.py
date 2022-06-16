@@ -34,16 +34,21 @@ class Directions(enum.Enum):
 
 
 class SnakeModel:
-    def __init__(self, apple_reposition_rate: int, width: int, height: int):
+    def __init__(
+            self, apple_reposition_rate: int, width: int, height: int,
+            initial_length: int = 1):
         """
         The model that recalculates object positions and game status after each
         step.
 
         Args:
             apple_reposition_rate (int): number of steps after which apple is
-            repositioned
-            width (int, optional): width of the grid
-            height (int, optional): height of the grid
+                repositioned
+            width (int): width of the grid
+            height (int): height of the grid
+            initial_length (int, optional): initial length of the snake. 
+                Defaults to 1.
+
         """
         self.width: int = width
         self.height: int = height
@@ -51,7 +56,8 @@ class SnakeModel:
 
         self.grid: Set[Position] = set(
             itertools.product(range(width), range(height)))
-        self.snake_positions: List[Position] = [(width // 2, height // 2)]
+        self.snake_positions: List[Position] = self.initialise_snake(
+            initial_length)
         self.apple_position: Position = self.random_free_position()
 
         self.snake_dead: bool = False
@@ -59,6 +65,27 @@ class SnakeModel:
         self.score: int = 0
         self.apple_reposition_counter: int = 0
         self.snake_stuck_counter: int = 0
+        self.steps_counter = 0
+
+    def initialise_snake(self, length: int) -> List[Position]:
+        """Initialises the snake with given length. Length is capped at `self.width`
+
+        Args:
+            length (int): Initial snake length
+
+        Returns:
+            List[Position]: List of snake positions
+        """
+        if length <= 0:
+            length = 1
+        elif length > self.width:
+            length = self.width
+        head_position = max(length-1, self.width//2)
+        positions = []
+        for pos in range(head_position, head_position-length, -1):
+            positions.append((pos, self.height // 2))
+
+        return positions
 
     def snake_length(self):
         """Returns the length of the snake"""
@@ -109,6 +136,7 @@ class SnakeModel:
         # increase counters
         self.apple_reposition_counter += 1
         self.snake_stuck_counter += 1
+        self.steps_counter += 1
 
     def move_snake(self, new_position: Position, grow_flag: bool):
         """Recomputes snake positions

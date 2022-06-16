@@ -30,20 +30,27 @@ if __name__ == '__main__':
         help="Number of neurons in each of the neural network layers, excluding the output layer (which has 3 neurons by design)",
         default=[10, 10, 10])
 
+    parser.add_argument(
+        '--length', '-i', type=int, nargs='?', dest='initial_length',
+        help="Initial snake length",
+        default=1)
+
     args = parser.parse_args()
     pop_size = args.pop_size
     num_epochs = args.epochs
     num_matches = args.matches
     stuck_threshold = args.stuck_threshold
     layers_size = args.layers_size
+    initial_length = args.initial_length
 
     # END OF ARGUMENTS PARSING
 
     model = GeneticAlgorithm(pop_size, layers_size)
-    model.train(num_epochs, num_matches, stuck_threshold=stuck_threshold,
-                print_frequency=1, multiprocessing=True)
+    model.train(
+        num_epochs, num_matches, stuck_threshold=stuck_threshold,
+        snake_length=initial_length, print_frequency=1, multiprocessing=True)
 
     layers_str = '_'.join(str(x) for x in model.layers_size)
-    name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_t{stuck_threshold}"
+    name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_t{stuck_threshold}_i{initial_length}"
     with open(f"saved_models/{name}.pickle", "wb") as f:
         pickle.dump(model, f)

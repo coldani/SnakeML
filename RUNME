@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # parse command line arguments
-while getopts s:e:m:t:l: flag
+while getopts s:e:m:t:l:i: flag
 do
     case "${flag}" in
         s) pop_size=${OPTARG};;
@@ -9,6 +9,7 @@ do
         m) num_matches=${OPTARG};;
         t) stuck_threshold=${OPTARG};;
         l) layers_size=${OPTARG};;
+        i) initial_length=${OPTARG};;
     esac
 done
 
@@ -24,7 +25,7 @@ pip install -r requirements.txt >> output/output.log 2>> output/error.log
 export PYGAME_HIDE_SUPPORT_PROMPT="hide"
 
 # train
-out="output/${layers_size} 3_s${pop_size}_e${num_epochs}_m${num_matches}_t${stuck_threshold}.log"
+out="output/${layers_size} 3_s${pop_size}_e${num_epochs}_m${num_matches}_t${stuck_threshold}_i${initial_length}.log"
 
 python3 train.py -s $pop_size -e $num_epochs -m $num_matches -t $stuck_threshold \
--l $layers_size >> ${out} 2>> output/error.log
+-l $layers_size -i $initial_length >> ${out} 2>> output/error.log
