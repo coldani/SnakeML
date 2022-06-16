@@ -262,8 +262,8 @@ class GeneticAlgorithm:
         """Prints epoch number, maximum fitness in the epoch and average fitness
           in that epoch"""
         print(f"Epoch: {epoch}" +
-              f" - max fitness: {max_fitness}," +
-              f" avg fitness: {avg_fitness}",
+              f" - max fitness: {max_fitness:.2f}," +
+              f" avg fitness: {avg_fitness:.2f}",
               flush=True)
 
     def print_final_info(self, epochs: int, num_matches: int,
