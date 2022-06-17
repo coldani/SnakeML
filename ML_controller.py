@@ -38,13 +38,10 @@ class MLController(Controller):
 
         dist_to_apple = m.normalised_relative_distance_to(dir, m.apple_position)
         dist_to_obstacles = m.normalised_distance_to_obstacles(dir)
-        snake_length = m.normalise_value(
-            m.snake_length(), 1, m.width * m.height, -1, 1)
         regions_density = m.normalised_regions_density(dir, 4)
 
         input = np.array([*dist_to_apple,
                           *dist_to_obstacles,
-                          snake_length,
                           *regions_density])[np.newaxis, :]
         return input
 
