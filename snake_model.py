@@ -43,7 +43,7 @@ class SnakeModel:
 
         Args:
             apple_reposition_rate (int): number of steps after which apple is
-                repositioned
+                repositioned. If None, it is never repositioned
             width (int): width of the grid
             height (int): height of the grid
             initial_length (int, optional): initial length of the snake. 
@@ -128,7 +128,8 @@ class SnakeModel:
             grow_flag = True
             self.reposition_apple()
         # apple moves
-        elif self.apple_reposition_counter > self.apple_reposition_rate:
+        elif ((self.apple_reposition_rate is not None) and
+              (self.apple_reposition_counter > self.apple_reposition_rate)):
             self.reposition_apple()
 
         # make actual move, grow snake if necessary

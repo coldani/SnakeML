@@ -14,7 +14,7 @@ class Game:
 
     def __init__(
             self, human: bool = True, weights: np.ndarray = None,
-            layers_size: List[int] = None, apple_reposition_rate: int = 50,
+            layers_size: List[int] = None, apple_reposition_rate: int = None,
             initial_snake_length: int = 1, snake_life_gain: int = 50):
         """Class that implements the snake game. Can be played either by a human
         with the keyboard or by the computer, with the direction updated by a 
@@ -30,7 +30,8 @@ class Game:
                 of the neural network, only used if human == False . 
                 Defaults to None.
             apple_reposition_rate (int, optional): Number of steps after which to
-                reposition the apple. Defaults to 50.
+                reposition the apple. Defaults to None, which means it is never 
+                repositioned.
             initial_snake_length (int, optional): initial snake length. 
                 Defaults to 1.
             snake_life (int, optional): snake life gain when apple is eaten.
