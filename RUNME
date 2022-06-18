@@ -7,7 +7,7 @@ do
         s) pop_size=${OPTARG};;
         e) num_epochs=${OPTARG};;
         m) num_matches=${OPTARG};;
-        t) stuck_threshold=${OPTARG};;
+        g) life_gain=${OPTARG};;
         l) layers_size=${OPTARG};;
         i) initial_length=${OPTARG};;
     esac
@@ -25,7 +25,7 @@ pip install -r requirements.txt >> output/output.log 2>> output/error.log
 export PYGAME_HIDE_SUPPORT_PROMPT="hide"
 
 # train
-out="output/${layers_size} 3_s${pop_size}_e${num_epochs}_m${num_matches}_t${stuck_threshold}_i${initial_length}.log"
+out="output/${layers_size} 3_s${pop_size}_e${num_epochs}_m${num_matches}_g${life_gain}_i${initial_length}.log"
 
-python3 train.py -s $pop_size -e $num_epochs -m $num_matches -t $stuck_threshold \
+python3 train.py -s $pop_size -e $num_epochs -m $num_matches -g $life_gain \
 -l $layers_size -i $initial_length >> ${out} 2>> output/error.log

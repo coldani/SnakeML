@@ -21,8 +21,8 @@ if __name__ == '__main__':
         default=1)
 
     parser.add_argument(
-        '--threshold', '-t', type=int, nargs='?', dest='stuck_threshold',
-        help="Number of steps without eating an apple allowed before terminating the game",
+        '--gain', '-g', type=int, nargs='?', dest='life_gain',
+        help="Snake life gain whenever an apple is eaten",
         default=200)
 
     parser.add_argument(
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     pop_size = args.pop_size
     num_epochs = args.epochs
     num_matches = args.matches
-    stuck_threshold = args.stuck_threshold
+    life_gain = args.life_gain
     layers_size = args.layers_size
     initial_length = args.initial_length
 
@@ -47,10 +47,10 @@ if __name__ == '__main__':
 
     model = GeneticAlgorithm(pop_size, layers_size)
     model.train(
-        num_epochs, num_matches, stuck_threshold=stuck_threshold,
+        num_epochs, num_matches, snake_life_gain=life_gain,
         snake_length=initial_length, print_frequency=1, multiprocessing=True)
 
     layers_str = '_'.join(str(x) for x in model.layers_size)
-    name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_t{stuck_threshold}_i{initial_length}"
+    name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_g{life_gain}_i{initial_length}"
     with open(f"saved_models/{name}.pickle", "wb") as f:
         pickle.dump(model, f)
