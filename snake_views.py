@@ -52,7 +52,7 @@ class Window:
         self.game_surface.update()
         self.snake.update(model.snake_positions)
         self.apple.update(model.apple_position)
-        self.text_score.update(model.score)
+        self.text_score.update(model.score, model.snake_life)
         pygame.display.flip()
 
     def scale_position(self, position: Position) -> Position:
@@ -207,13 +207,20 @@ class TextScore:
         self.window: Window = window
         self.font: pygame.font.Font = pygame.font.SysFont(None, 20)
 
-    def update(self, score: int):
+    def update(self, score: int, life: int):
         """Renders the current score
 
         Args:
             score (int): Score to render
+            life (int): Snake life to render
         """
         BLACK: Color = (0, 0, 0)
-        position: Position = (self.window.width - 80, GameSurface.GRID_SIZE)
-        font = self.font.render(f"Score: {score}", True, BLACK)
-        self.window.surface.blit(font, position)
+        score_position: Position = (
+            self.window.width - 80, GameSurface.GRID_SIZE // 2)
+        score_font = self.font.render(f"Score: {score}", True, BLACK)
+        life_position: Position = (
+            self.window.width - 80, int(GameSurface.GRID_SIZE * (3/2)))
+        life_font = self.font.render(f"Life: {life}", True, BLACK)
+
+        self.window.surface.blit(score_font, score_position)
+        self.window.surface.blit(life_font, life_position)

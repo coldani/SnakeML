@@ -36,7 +36,7 @@ class Directions(enum.Enum):
 class SnakeModel:
     def __init__(
             self, apple_reposition_rate: int, width: int, height: int,
-            initial_length: int = 1):
+            initial_length: int = 1, snake_life_gain: int = 50):
         """
         The model that recalculates object positions and game status after each
         step.
@@ -48,6 +48,8 @@ class SnakeModel:
             height (int): height of the grid
             initial_length (int, optional): initial length of the snake. 
                 Defaults to 1.
+            snake_life_gain (int, optional): life gain when apple is eaten (also
+                initial life is set equal to twice this value). Defaults to 50.
 
         """
         self.width: int = width
@@ -64,7 +66,8 @@ class SnakeModel:
         self.victory: bool = False
         self.score: int = 0
         self.apple_reposition_counter: int = 0
-        self.snake_stuck_counter: int = 0
+        self.snake_life_gain: int = snake_life_gain
+        self.snake_life: int = snake_life_gain * 2
         self.steps_counter = 0
 
     def initialise_snake(self, length: int) -> List[Position]:
@@ -119,7 +122,9 @@ class SnakeModel:
         # eats apple
         elif self.is_apple_eaten(new_position):
             self.score += 1
-            self.snake_stuck_counter = 0
+            self.snake_life = min(  # capped to area of surface
+                self.snake_life + self.snake_life_gain,
+                self.width * self.height)
             grow_flag = True
             self.reposition_apple()
         # apple moves
@@ -133,10 +138,10 @@ class SnakeModel:
         if len(self.free_positions()) == 0:
             self.victory = True
 
-        # increase counters
+        # increase counters and decrease snake life
         self.apple_reposition_counter += 1
-        self.snake_stuck_counter += 1
         self.steps_counter += 1
+        self.snake_life -= 1
 
     def move_snake(self, new_position: Position, grow_flag: bool):
         """Recomputes snake positions
