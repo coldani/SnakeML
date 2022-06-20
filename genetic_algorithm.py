@@ -138,7 +138,8 @@ class GeneticAlgorithm:
             individual_weights (np.ndarray): Unrolled weights to be fed in the 
                 neural network
             num_matches (int): The number of matches to play to calculate an 
-                individual's fitness
+                individual's fitness. Can also be a list, in which case it will
+                use different snake lengths
             life_gain (int): The snake_life_gain used in Game,
                 a lower threshold results in quicker training as the game is
                 stopped earlier in case of no progress.
@@ -147,14 +148,17 @@ class GeneticAlgorithm:
         Returns:
             int: Fitness of the individual, equal to the sum of the scores on each game
         """
+        if isinstance(snake_length, int):
+            snake_length = [snake_length]
         fitness: int = 0
         for match in range(num_matches):
-            # Note we don't want to reposition the apple during training
-            game = Game(False, individual_weights, self.layers_size,
-                        None, snake_length, life_gain)
-            game.run(False)
-            fitness += game.model.score
-        fitness /= num_matches
+            for sl in snake_length:
+                # Note we don't want to reposition the apple during training
+                game = Game(False, individual_weights, self.layers_size,
+                            None, sl, life_gain)
+                game.run(False)
+                fitness += game.model.score
+        fitness /= (num_matches * len(snake_length))
         return fitness
 
     def multiproc_fitness(self, num_matches: int, life_gain: int,
@@ -231,6 +235,8 @@ class GeneticAlgorithm:
                 a lower threshold results in quicker training as the game is
                 stopped earlier in case of no progress. Defaults to 50.
             snake_length (int, optional): initial snake length. Defaults to 1.
+                Also accepts lists of int, in which case it will play multiple games
+                with different snake lengths
             print_frequency (int, optional): If > 0, prints fitness of best 
                 individual every print_frequency epoch. Defaults to 0 (i.e. nothing 
                 is printed).
