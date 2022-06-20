@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # parse command line arguments
-while getopts s:e:m:t:l:i: flag
+while getopts s:e:m:g:l:i: flag
 do
     case "${flag}" in
         s) pop_size=${OPTARG};;

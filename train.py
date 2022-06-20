@@ -31,7 +31,7 @@ if __name__ == '__main__':
         default=[10, 10, 10])
 
     parser.add_argument(
-        '--length', '-i', type=int, nargs='?', dest='initial_length',
+        '--length', '-i', type=int, nargs='+', dest='initial_length',
         help="Initial snake length",
         default=1)
 
