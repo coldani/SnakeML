@@ -85,8 +85,11 @@ class GeneticAlgorithm:
         offsprings = parents[indices, :].copy()
 
         # Update sigma
+        MIN_SIGMA = 0.1
         mutation_of_sigma = np.random.normal(0, 1, self.offspring_size)
-        sigma = offsprings[:, -1] * np.exp(self.tau * mutation_of_sigma)
+        sigma = np.maximum(
+            offsprings[:, -1] * np.exp(self.tau * mutation_of_sigma),
+            MIN_SIGMA)
         offsprings[:, -1] = sigma
 
         # Apply random mutation based on new sigma
