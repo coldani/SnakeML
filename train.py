@@ -46,9 +46,9 @@ if __name__ == '__main__':
     # END OF ARGUMENTS PARSING
 
     model = GeneticAlgorithm(pop_size, layers_size)
-    model.train(
-        num_epochs, num_matches, snake_life_gain=life_gain,
-        snake_length=initial_length, print_frequency=1, multiprocessing=True)
+    model.train(num_epochs, num_matches, snake_life_gain=life_gain,
+                snake_length=initial_length, print_frequency=1,
+                multiprocessing=True, save_checkpoint=True)
 
     layers_str = '_'.join(str(x) for x in model.layers_size)
     name = f"{layers_str}_s{pop_size}_e{num_epochs}_m{num_matches}_g{life_gain}_i{initial_length}"

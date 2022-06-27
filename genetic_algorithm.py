@@ -1,7 +1,9 @@
+import multiprocessing
+import os
+import pickle
 import time
 from concurrent.futures import ProcessPoolExecutor
 from math import sqrt
-import multiprocessing
 from typing import List
 
 import numpy as np
@@ -226,7 +228,8 @@ class GeneticAlgorithm:
     def train(
             self, epochs: int, num_matches: int = 1, snake_life_gain: int = 50,
             snake_length: int = 1, print_frequency: int = 0,
-            multiprocessing: bool = False):
+            multiprocessing: bool = False, initial_pop: np.ndarray = None,
+            save_checkpoint: bool = False):
         """Trains the neural network applying the (mu+lambda)-ES algorithm
         On each epoch saves the fittest individual along with its fitness
 
@@ -246,7 +249,16 @@ class GeneticAlgorithm:
             multiprocessing (bool, optional): determines whether training is 
                 performed syncronously (if False) or in parallel using all but
                 one of the machine hardware threads (if True). Defaults to False.
+            initial_pop (np.ndarray, optional): if given, it's used to initialise
+                the population before training. Defaults to None.
+            save_checkpoint (bool, optional): if True saves checkpoint of population
+                every 100 epochs. Defaults to False.
         """
+
+        if initial_pop is not None:
+            assert (initial_pop.shape == self.population.shape).all(
+            ), "Wrong population size"
+            self.population = initial_pop
 
         start = time.monotonic()
 
@@ -270,11 +282,27 @@ class GeneticAlgorithm:
                     epoch, np.max(fitness),
                     np.average(fitness))
 
+            if save_checkpoint and epoch % 100 == 0:
+                self.save_chekpoint(epochs, num_matches,
+                                    snake_life_gain, snake_length)
+
         end = time.monotonic()
         elapsed = end - start
         if print_frequency > 0:
             self.print_final_info(epochs, num_matches,
                                   snake_life_gain, snake_length, elapsed)
+
+    def save_chekpoint(
+            self, tot_epochs, num_matches, life_gain, initial_length):
+
+        layers_str = '_'.join(str(x) for x in self.layers_size)
+        name = f"{layers_str}_s{self.pop_size}_e{tot_epochs}_m{num_matches}_g{life_gain}_i{initial_length}"
+
+        folder = 'saved_models'
+        if not os.path.exists(folder):
+            os.makedirs('my_folder')
+        with open(f"{folder}/{name}_weights.pickle", "wb") as f:
+            pickle.dump(self.population, f)
 
     def print_epoch_info(self, epoch: int, max_fitness: int, avg_fitness: int):
         """Prints epoch number, maximum fitness in the epoch and average fitness
