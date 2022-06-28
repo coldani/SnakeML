@@ -283,6 +283,7 @@ class GeneticAlgorithm:
                     np.average(fitness))
 
             if save_checkpoint and epoch % 100 == 0:
+                print("Saving checkpoint")
                 self.save_chekpoint(epochs, num_matches,
                                     snake_life_gain, snake_length)
 
