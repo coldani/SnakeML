@@ -1,3 +1,5 @@
+import argparse
+import pickle
 from typing import List
 
 import numpy as np
@@ -81,5 +83,18 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()
+
+    # PARSE ARGUMENTS
+    parser = argparse.ArgumentParser(description='Training of Snake')
+    parser.add_argument('--ml', dest='ml', action='store_true')
+    args = parser.parse_args()
+
+    if args.ml:
+        with open("data/epoch1000.pickle", 'rb') as f:
+            weights = pickle.load(f)
+        game = Game(human=False, weights=weights,
+                    layers_size=[9, 9, 9, 9, 9, 3])
+    else:
+        game = Game()
+
     game.run()

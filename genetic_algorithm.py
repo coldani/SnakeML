@@ -8,8 +8,8 @@ from typing import List
 
 import numpy as np
 
-from main import Game
 from ML_controller import FeedForwardNetwork
+from snake import Game
 
 
 class GeneticAlgorithm:
