@@ -23,12 +23,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--gain', '-g', type=int, nargs='?', dest='life_gain',
         help="Snake life gain whenever an apple is eaten",
-        default=200)
+        default=50)
 
     parser.add_argument(
         '--layers', '-l', type=int, nargs='+', dest='layers_size',
         help="Number of neurons in each of the neural network layers, excluding the output layer (which has 3 neurons by design)",
-        default=[10, 10, 10])
+        default=[9, 9, 9])
 
     parser.add_argument(
         '--length', '-i', type=int, nargs='+', dest='initial_length',
