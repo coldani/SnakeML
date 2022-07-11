@@ -256,8 +256,8 @@ class GeneticAlgorithm:
         """
 
         if initial_pop is not None:
-            assert (initial_pop.shape == self.population.shape).all(
-            ), "Wrong population size"
+            assert (initial_pop.shape ==
+                    self.population.shape), "Wrong population size"
             self.population = initial_pop
 
         start = time.monotonic()
