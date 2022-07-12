@@ -139,30 +139,30 @@ At the end of the training period, the average individual is able to eat close t
 Let's now see the model in action at different stages of the training process!
 
 #### Epoch 0
-![This gif couldn't be displayed](pictures/epoch0.gif "Epoch 0")
+<img src="pictures/epoch0.gif" alt="This gif couldn't be displayed" width="500"/>
 
 At the beginning of the training process, the snake is not able to eat any apple: it just continues straight until it hits the wall!
 
 #### Epoch 10
-![This gif couldn't be displayed](pictures/epoch10.gif "Epoch 10")
+<img src="pictures/epoch10.gif" alt="This gif couldn't be displayed" width="500"/>
 
 After just 10 epochs, the snake has learnt not to hit the walls. 
 However, learning how to actually eat the apple is another matter...
 
 #### Epoch 100
-![This gif couldn't be displayed](pictures/epoch100.gif "Epoch 100")
+<img src="pictures/epoch100.gif" alt="This gif couldn't be displayed" width="500"/>
 
 After 100 epochs the snake has finally learnt to eat the apple, although with some mistakes along the way, and a nasty crash into the wall after a score of just 6 apples.
 
 #### Epoch 400 (snippets only)
-![This gif couldn't be displayed](pictures/epoch400_snippets.gif "Epoch 400")
+<img src="pictures/epoch400_snippets.gif" alt="This gif couldn't be displayed" width="500"/>
 
 After 400 epochs the snake is able to make some great moves and definitely knows how to avoid the wall and its tail. 
 Interestingly, it seems that it prefers to turn left even when turning right would have been the obvious and better choice (note this feature appeared in epoch 100 already).
 Eventually it crashes into its tail with a score of 58: more than expected given the fitness evolution graph above!
 
 #### Epoch 1000 (snippets only)
-![This gif couldn't be displayed](pictures/epoch1000_snippets.gif "Epoch 1000")
+<img src="pictures/epoch1000_snippets.gif" alt="This gif couldn't be displayed" width="500"/>
 
 After 1,000 epochs the snake doesn't look much smarter than it was after 400 epochs, however we know from the graph above that actually on average (i.e. if compared on multiple games) it should score better than its earlier version. 
 One issue it still maintains is that it still prefers to turn left, even when turning right would be a better option.
